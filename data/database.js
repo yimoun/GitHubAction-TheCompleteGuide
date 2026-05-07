@@ -21,6 +21,7 @@ try {
   console.log('Connection failed.');
   await client.close();
   console.log('Connection closed.');
+  throw error;
 }
 
 const database = client.db(dbName);
