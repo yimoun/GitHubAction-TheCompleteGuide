@@ -11,10 +11,10 @@ jobs:
   test:
     environment: testing
     env:
-      MONGODB_CLUSTER_ADDRESS: ${{ secrets.MONGODB_CLUSTER_ADDRESS }}
-      MONGODB_USERNAME: ${{ secrets.MONGODB_USERNAME }}
-      MONGODB_PASSWORD: ${{ secrets.MONGODB_PASSWORD }}
-      PORT: ${{ secrets.PORT }}
+      MONGODB_CLUSTER_ADDRESS: cluster0.cxppnk9.mongodb.net
+      MONGODB_USERNAME: nelsonyimou_db_user
+      MONGODB_PASSWORD: W1R6SEPtnV9S7VG
+      PORT: 3000
     runs-on: ubuntu-latest
     steps:
       - name: Get Code
