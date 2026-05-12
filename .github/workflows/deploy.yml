@@ -29,7 +29,8 @@ jobs:
       - name: Run server
         run: |
           set -o pipefail
-          npm start & npx wait-on http://127.0.0.1:$PORT 2>&1 | tee server.log
+          npm start 2>&1 | tee server.log &
+          npx wait-on http://127.0.0.1:$PORT
       - name: Run tests
         run: |
           set -o pipefail
