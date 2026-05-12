@@ -13,7 +13,7 @@ jobs:
     env:
       MONGODB_CLUSTER_ADDRESS: cluster0.cxppnk9.mongodb.net
       MONGODB_USERNAME: nelsonyimou_db_user
-      MONGODB_PASSWORD: W1R6SEPtnV9S7VG
+      MONGODB_PASSWORD: fW1R6SEPtnV9S7VG
       PORT: 3000
     runs-on: ubuntu-latest
     steps:
@@ -27,9 +27,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Run server
-        run: npm start & npx wait-on http://127.0.0.1:$PORT 2>&1 | tee server.log
+        run: |
+          set -o pipefail
+          npm start & npx wait-on http://127.0.0.1:$PORT 2>&1 | tee server.log
       - name: Run tests
-        run: npm test 2>&1 | tee test.log
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee test.log
       - name: Output information
         run: |
           echo "MONGODB_USERNAME: ${{ env.MONGODB_USERNAME }}"
