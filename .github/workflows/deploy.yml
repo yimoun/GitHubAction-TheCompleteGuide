@@ -9,7 +9,7 @@ env:
   MONGODB_DB_NAME: nelsonyimou_db
 jobs:
   test:
-    environment: testing
+    environment: testing_1
     env:
       MONGODB_CLUSTER_ADDRESS: cluster0.cxppnk9.mongodb.net
       MONGODB_USERNAME: ${ { secrets.MONGODB_USERNAME } }
