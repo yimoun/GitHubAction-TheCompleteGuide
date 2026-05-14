@@ -40,7 +40,7 @@ jobs:
           npm test 2>&1 | tee test.log
       - name: Output information
         run: |
-          echo "MONGODB_USERNAME: ${{ env.MONGODB_USERNAME }}"
+          echo "The MONGODB_USERNAME: ${{ env.MONGODB_USERNAME }}"
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v4
