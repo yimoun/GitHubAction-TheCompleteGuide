@@ -124,3 +124,138 @@ Points importants :
 | Accès | Téléchargement dans l'UI GitHub | `${{ steps.id.outputs.nom }}` |
 | Exemple | `upload-artifact` | `echo "val=x" >> $GITHUB_OUTPUT` |
 
+---
+
+### 8. Conditions sur les steps — `if:` et la condition implicite `success()`
+
+Chaque step a une condition implicite `success()` ajoutée automatiquement par GitHub Actions. Cela signifie que si un step précédent échoue, tous les steps suivants sont **skippés** — même si leur `if:` devrait les faire tourner.
+
+**Piège classique :**
+```yaml
+- name: Test code
+  id: run-test
+  run: npm run test
+
+- name: Upload test report
+  if: steps.run-test.outcome == 'failure'   # ← ne fonctionne PAS si test échoue
+```
+
+GitHub évalue en réalité : `success() && steps.run-test.outcome == 'failure'`
+Comme `success()` retourne `false` après un échec, la condition court-circuite → step skippé.
+
+**Solution — utiliser une status check function :**
+```yaml
+- name: Upload test report
+  if: failure() && steps.run-test.outcome == 'failure'   # ← fonctionne
+```
+
+| Status function | Retourne `true` quand... |
+|---|---|
+| `success()` | Aucun step précédent n'a échoué (défaut implicite) |
+| `failure()` | Au moins un step précédent a échoué |
+| `always()` | Toujours (même en cas d'annulation) |
+| `cancelled()` | Le workflow a été annulé |
+
+Dès qu'on utilise une status function explicite dans `if:`, la condition implicite `success()` est supprimée.
+
+---
+
+### 9. Conditions sur les jobs — `needs` context et `if: failure()`
+
+Le contexte `needs` permet à un job d'accéder aux résultats des jobs dont il dépend.
+
+```yaml
+report:
+  needs: [lint, deploy]
+  if: failure()
+  runs-on: ubuntu-latest
+  steps:
+    - name: Output information
+      run: |
+        echo "Lint job status:  ${{ needs.lint.result }}"
+        echo "Test job status:  ${{ needs.test.result }}"
+        echo "Build job status: ${{ needs.build.result }}"
+```
+
+Points importants :
+- `needs.X.result` retourne : `success`, `failure`, `cancelled`, ou `skipped`
+- Un job **skippé** (parce que son dépendant a échoué) ne compte pas comme `failure` dans `failure()`
+- Pour qu'un job de reporting soit toujours déclenché, utiliser `if: always()`
+- `if: failure()` au niveau job se comporte comme au niveau step : la condition implicite est remplacée
+
+---
+
+### 10. Stratégie de matrice (Matrix Strategy)
+
+La matrix strategy permet de lancer le même job avec plusieurs combinaisons de variables.
+
+```yaml
+jobs:
+  build:
+    strategy:
+      matrix:
+        node-version: [12, 16, 18]
+        operating-system: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.operating-system }}
+    steps:
+      - name: Install NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+```
+
+GitHub génère le **produit cartésien** : 3 × 3 = 9 jobs ici.
+
+**`include` et `exclude` :**
+```yaml
+matrix:
+  node-version: [12, 16, 18]
+  operating-system: [ubuntu-latest, windows-latest, macos-latest]
+  include:
+    - node-version: 18          # ajoute ou enrichit cette combinaison
+      operating-system: ubuntu-latest
+  exclude:
+    - node-version: 12          # supprime cette combinaison du produit cartésien
+      operating-system: windows-latest
+```
+
+| Clé | Effet |
+|---|---|
+| `include` | Ajoute une combinaison absente, ou enrichit une combinaison existante avec des variables supplémentaires |
+| `exclude` | Supprime une combinaison spécifique du produit cartésien |
+
+---
+
+### 11. `continue-on-error`
+
+Par défaut, si un job échoue dans une matrice, GitHub Actions annule tous les autres jobs en cours.
+`continue-on-error: true` permet de laisser tourner les autres combinaisons malgré l'échec.
+
+```yaml
+jobs:
+  build:
+    continue-on-error: true   # les autres combinaisons de matrice continuent si l'une échoue
+    strategy:
+      matrix:
+        node-version: [12, 16, 18]
+```
+
+Différence avec `if: always()` : `continue-on-error` n'empêche pas le job de marquer le run comme **failed** — il laisse juste les autres jobs se terminer. `if: always()` force un step/job à s'exécuter indépendamment du résultat.
+
+---
+
+### 12. Organisation du repo par sections de tuto
+
+Pour travailler sur plusieurs sections d'un même cours sans créer plusieurs repos GitHub :
+
+- Créer une branche par section : `section-2`, `section-7`, etc.
+- Utiliser un wildcard dans le trigger pour couvrir toutes les branches :
+
+```yaml
+on:
+  push:
+    branches:
+      - main
+      - section-*
+```
+
