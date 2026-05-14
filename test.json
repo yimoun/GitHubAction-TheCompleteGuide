@@ -1,23 +1,46 @@
 {
-  "numTotalTestSuites": 1,
-  "numPassedTestSuites": 0,
-  "numFailedTestSuites": 1,
+  "numTotalTestSuites": 2,
+  "numPassedTestSuites": 2,
+  "numFailedTestSuites": 0,
   "numPendingTestSuites": 0,
-  "numTotalTests": 0,
-  "numPassedTests": 0,
+  "numTotalTests": 2,
+  "numPassedTests": 2,
   "numFailedTests": 0,
   "numPendingTests": 0,
   "numTodoTests": 0,
-  "startTime": 1662469084119,
-  "success": false,
+  "startTime": 1778744783220,
+  "success": true,
   "testResults": [
     {
-      "assertionResults": [],
-      "startTime": 1662469084119,
-      "endTime": 1662469084119,
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "",
+            "MainContent"
+          ],
+          "fullName": " MainContent should render a button",
+          "status": "passed",
+          "title": "should render a button",
+          "duration": 14,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "MainContent"
+          ],
+          "fullName": " MainContent should show the help area after clicking the button",
+          "status": "passed",
+          "title": "should show the help area after clicking the button",
+          "duration": 13,
+          "failureMessages": []
+        }
+      ],
+      "startTime": 1778744783731,
+      "endTime": 1778744783758,
       "status": "passed",
-      "message": "\u001b[0m\u001b[0m\n\u001b[0m\u001b[4m/Users/max/development/teaching/gh-flow/src/components/HelpBox.jsx\u001b[24m\u001b[0m\n\u001b[0m  \u001b[2m5:20\u001b[22m  \u001b[31merror\u001b[39m  'title' is missing in props validation  \u001b[2mreact/prop-types\u001b[22m\u001b[0m\n\u001b[0m  \u001b[2m5:27\u001b[22m  \u001b[31merror\u001b[39m  'text' is missing in props validation   \u001b[2mreact/prop-types\u001b[22m\u001b[0m\n\u001b[0m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m✖ 2 problems (2 errors, 0 warnings)\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m\u001b[22m\u001b[39m\u001b[0m",
-      "name": "/Users/max/development/teaching/gh-flow/src/components/MainContent.test.jsx"
+      "message": "",
+      "name": "/Users/nelsonjunioryimounoubissi/Downloads/01 Starting Project/src/components/MainContent.test.jsx"
     }
   ]
 }
