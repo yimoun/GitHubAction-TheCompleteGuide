@@ -4,7 +4,7 @@ on:
     branches:
       - main
       - dev
-      - release/*
+     
 
 env:
   MONGODB_DB_NAME: nelsonyimou_db
@@ -21,11 +21,13 @@ jobs:
       - name: Get Code
         uses: actions/checkout@v4
       - name: Cache dependencies
+        id: cache
         uses: actions/cache@v4
         with:
-          path: ~/.npm
+          path: node_modules
           key: npm-deps-${{ hashFiles('**/package-lock.json') }}
       - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
         run: npm ci
       - name: Run server
         run: |
