@@ -1,7 +1,7 @@
 name: Reusable Deploy
-on: 
+on:
   workflow_call:
-  inputs:
+    inputs:
     artifact-name:
       required: false
       default: dist-files
