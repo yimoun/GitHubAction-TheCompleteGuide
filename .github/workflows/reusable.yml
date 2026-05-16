@@ -7,10 +7,10 @@ on:
         default: dist-files
         type: string
         description: Name of the deployable artifact to download
-      outputs:
-        result:
-          description: 'The result of the deploy job'
-          value: ${{ jobs.deploy.outputs.outcome }}
+    outputs:
+      result:
+        description: 'The result of the deploy job'
+        value: ${{ jobs.deploy.outputs.outcome }}
 jobs: 
   deploy:
     outputs:
