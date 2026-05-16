@@ -7,8 +7,14 @@ on:
         default: dist-files
         type: string
         description: Name of the deployable artifact to download
+      outputs:
+        result:
+          description: 'The result of the deploy job'
+          value: ${{ jobs.deploy.outputs.outcome }}
 jobs: 
   deploy:
+    outputs:
+      outcome: ${{ steps.set-output.outputs.step-result }}
     runs-on: ubuntu-latest
     steps:
       - name: Get build artifacts from called workflow
@@ -19,3 +25,6 @@ jobs:
         run: ls
       - name: Output information
         run: echo "This is a reusable workflow"
+      - name: Set output result
+        id: set-output
+        run: echo "::set-output name=step-result::success"
