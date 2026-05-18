@@ -242,20 +242,99 @@ jobs:
 
 Différence avec `if: always()` : `continue-on-error` n'empêche pas le job de marquer le run comme **failed** — il laisse juste les autres jobs se terminer. `if: always()` force un step/job à s'exécuter indépendamment du résultat.
 
----
 
-### 12. Organisation du repo par sections de tuto
+### 12. Reusable Workflows — `workflow_call`
 
-Pour travailler sur plusieurs sections d'un même cours sans créer plusieurs repos GitHub :
+Un workflow réutilisable est un fichier `.yml` normal déclenché par `workflow_call` au lieu de `push` ou `pull_request`. Il permet d'extraire une logique commune (ex: deploy) et de l'appeler depuis plusieurs workflows.
 
-- Créer une branche par section : `section-2`, `section-7`, etc.
-- Utiliser un wildcard dans le trigger pour couvrir toutes les branches :
+#### 13. Déclarer un workflow réutilisable
 
 ```yaml
+# .github/workflows/reusable.yml
+name: Reusable Deploy
 on:
-  push:
-    branches:
-      - main
-      - section-*
+  workflow_call:
+    inputs:
+      artifact-name:
+        required: false
+        default: dist-files
+        type: string
+        description: Name of the deployable artifact to download
+    outputs:
+      result:
+        description: Result of the deploy job
+        value: ${{ jobs.deploy.outputs.outcome }}
+jobs:
+  deploy:
+    outputs:
+      outcome: ${{ steps.set-result.outputs.step-result }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+      - name: Set result output
+        id: set-result
+        run: echo "step-result=success" >> $GITHUB_OUTPUT
+```
+
+#### 14. Appeler un workflow réutilisable
+
+```yaml
+# Dans n'importe quel autre workflow
+jobs:
+  deploy:
+    needs: build
+    uses: ./.github/workflows/reusable.yml   # chemin local
+    with:
+      artifact-name: dist-files              # passage d'input
+
+  print-result:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Deploy result: ${{ needs.deploy.outputs.result }}"
+```
+
+#### 15. Chaîne complète des outputs
+
+Les outputs remontent niveau par niveau — un output de step doit être promu en output de job, puis en output de workflow :
+
+```
+step output   →   job output   →   workflow output   →   needs.X.outputs.Y
+echo "val=x" >> $GITHUB_OUTPUT
+              outputs:
+                outcome: ${{ steps.id.outputs.val }}
+                          outputs:
+                            result:
+                              value: ${{ jobs.deploy.outputs.outcome }}
+                                              ${{ needs.deploy.outputs.result }}
+```
+
+#### 16. Points importants
+
+- `uses:` au niveau **job** (pas step) pour appeler un workflow réutilisable
+- `with:` passe les inputs, `secrets: inherit` transmet les secrets du workflow appelant
+- Un job qui appelle un workflow réutilisable **ne peut pas avoir de `steps:`**
+- Les outputs du workflow appelé sont accessibles via `needs.X.outputs.Y` dans les jobs suivants
+- `workflow_call` peut coexister avec d'autres triggers (`push`, `schedule`, etc.)
+
+#### 17. Secrets dans un workflow réutilisable
+
+```yaml
+# Côté réutilisable — déclaration
+on:
+  workflow_call:
+    secrets:
+      DB_PASSWORD:
+        required: true
+
+# Côté appelant — transmission automatique
+jobs:
+  deploy:
+    uses: ./.github/workflows/reusable.yml
+    secrets: inherit   # transmet tous les secrets du repo appelant
 ```
 
