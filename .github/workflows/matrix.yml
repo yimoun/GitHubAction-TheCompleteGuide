@@ -1,5 +1,8 @@
 name: Matrix Demo
-on: push
+on:
+  push:
+    branches:
+      - section-7
 jobs:
   build:
     continue-on-error: true
