@@ -338,3 +338,66 @@ jobs:
     secrets: inherit   # transmet tous les secrets du repo appelant
 ```
 
+---
+
+### 18. Containers et Services
+
+#### Runner vs Container vs Service
+
+```
+┌──────────────────────────────────────────────────────┐
+│              GitHub Runner (VM ubuntu-latest)         │
+│   Node, Python, Git, Docker... pré-installés         │
+│                                                      │
+│  ┌────────────────────┐   ┌────────────────────────┐ │
+│  │  Job container      │◄──│  Service container      │ │
+│  │  node:16            │   │  mongo:latest           │ │
+│  │  (tes steps         │   │  accessible via le      │ │
+│  │   s'exécutent ici)  │   │  hostname "mongo"       │ │
+│  └────────────────────┘   └────────────────────────┘ │
+└──────────────────────────────────────────────────────┘
+```
+
+| | Runner seul | Container (`container:`) | Service (`services:`) |
+|---|---|---|---|
+| Rôle | Machine hôte généraliste | Environnement d'exécution de tes steps | Dépendance externe (DB, cache...) |
+| Quand l'utiliser | Outils déjà présents sur ubuntu-latest | Version précise / environnement spécialisé | Besoin d'une DB ou d'un service annexe pendant les tests |
+| Hostname réseau | — | — | Nom de la clé (`mongo`, `redis`...) |
+
+#### Déclarer un container de job
+
+```yaml
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: node:16        # tes steps tournent dans Node 16 exactement
+```
+
+#### Déclarer un service
+
+```yaml
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: node:16
+    services:
+      mongo:                # hostname réseau = "mongo"
+        image: mongo:latest
+        env:
+          MONGO_INITDB_ROOT_USERNAME: root
+          MONGO_INITDB_ROOT_PASSWORD: example
+    env:
+      MONGODB_CLUSTER_ADDRESS: mongo   # ton app se connecte via ce hostname
+```
+
+Points importants :
+- Les services appartiennent à **un job spécifique** — chaque job configure ses propres services
+- Le container de job et les services **partagent le même réseau** : ils communiquent via hostname
+- Sans `container:` sur le job, les services sont quand même accessibles mais via `localhost`
+- GitHub démarre les services **avant** les steps du job, puis les arrête à la fin
+- Avantage vs installation manuelle : pas de step d'installation, plus rapide, plus fiable
+
+---
+
