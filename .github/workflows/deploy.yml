@@ -12,6 +12,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Get & Load & Cache Dependencies
         uses: ./.github/workflows/actions/cached-deps
+        with:
+          caching: false
       - name: Lint code
         run: npm run lint
   test:
