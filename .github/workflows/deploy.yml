@@ -8,6 +8,8 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
+      - name: Get code
+        uses: actions/checkout@v4
       - name: Get & Load & Cache Dependencies
         uses: ./.github/workflows/actions/cached-deps
       - name: Lint code

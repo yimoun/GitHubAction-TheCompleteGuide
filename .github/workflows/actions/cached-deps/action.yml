@@ -1,11 +1,9 @@
-name: 'Get & Load & Cache Dependencies'
+name: 'Load & Cache Dependencies'
 description: 'Get and cache dependencies for a project.'
 author: 'Nelson YIMOU'
 runs:
   using: 'composite'
   steps:
-    - name: Get code
-      uses: actions/checkout@v4
     - name: Cache dependencies
       id: cache
       uses: actions/cache@v4
