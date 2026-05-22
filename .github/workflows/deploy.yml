@@ -8,17 +8,8 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - name: Get code
-        uses: actions/checkout@v4
-      - name: Cache dependencies
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: deps-node-modules-${{ hashFiles('**/package-lock.json') }}
-      - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: npm ci
+      - name: Get & Load & Cache Dependencies
+        uses: ./.github/workflows/actions/cached-deps
       - name: Lint code
         run: npm run lint
   test:
