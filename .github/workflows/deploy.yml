@@ -71,5 +71,6 @@ jobs:
       - name: Get code
         uses: actions/checkout@v4
       - name: Run custom action
-        run: ./.github/workflows/actions/cached-deps
+        uses: ./.github/workflows/actions/cached-deps   # ← CORRECT
+
   
