@@ -11,9 +11,11 @@ function run () {
   const distFolder = core.getInput('dist-folder', { required: true });
 
   // 2) Upload files
+  core.notice('Hello from my custom JavaScript action!');    
   exec.exec(`aws s3 sync ${distFolder} s3://${bucketName} --region ${bucketRegion}`);
 
-  core.notice('Hello from my custom JavaScript action!');    
+  const websiteUrl = `http://${bucketName}.s3-website-${bucketRegion}.amazonaws.com`;
+  core.setOutput('website-url', websiteUrl);
 }
 
 
