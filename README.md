@@ -401,3 +401,132 @@ Points importants :
 
 ---
 
+### 19. Actions personnalisées (Custom Actions)
+
+Il existe 3 types d'actions personnalisées :
+
+| Type | Fichier d'entrée | Quand l'utiliser |
+|---|---|---|
+| JavaScript | `main.js` | Actions rapides, pas de dépendance système |
+| Docker | `Dockerfile` + script | Environnement contrôlé, n'importe quel langage |
+| Composite | `action.yml` (steps) | Regrouper des steps existants sans code |
+
+#### Structure d'une action Docker
+
+```
+.github/workflows/actions/deploy-s3-docker/
+├── action.yml        ← métadonnées (inputs, outputs, branding)
+├── Dockerfile        ← image Docker à construire
+├── deployment.py     ← script exécuté dans le container
+└── requirements.txt  ← dépendances Python
+```
+
+#### `action.yml` — métadonnées de l'action
+
+```yaml
+name: 'Deploy to AWS S3'
+description: 'Deploy a static website to AWS S3.'
+author: 'Nelson YIMOU'
+inputs:
+  bucket-name:
+    description: 'The name of the S3 bucket.'
+    required: true
+  bucket-region:
+    required: false
+    default: 'us-east-1'
+outputs:
+  website-url:
+    description: 'URL of the deployed website.'
+branding:
+  icon: 'terminal'
+  color: 'yellow'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+```
+
+#### Utiliser une action locale dans un workflow
+
+```yaml
+- name: Deploy site
+  uses: ./.github/workflows/actions/deploy-s3-docker   # chemin relatif depuis la racine du repo
+  with:
+    bucket-name: ${{ secrets.S3_BUCKET_NAME }}
+    dist-folder: ./dist
+```
+
+Points importants :
+- Le chemin dans `uses:` est **relatif à la racine du repo**, pas au fichier workflow
+- `actions/checkout` doit toujours précéder l'utilisation d'une action locale (sinon le runner ne trouve pas les fichiers)
+- Pour une action Docker, GitHub construit l'image à chaque run (sauf cache Docker)
+- Toujours **épingler la version de Python** dans le Dockerfile (ex: `python:3.12`) — `python:3` suit la dernière version et peut casser si un module standard est supprimé (ex: `cgi` retiré en Python 3.13)
+
+---
+
+### 20. Cycle de vie d'un job — steps automatiques
+
+Chaque job GitHub Actions contient des steps que tu n'as pas écrits, générés automatiquement par le runner :
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Set up job                  ← GitHub prépare le runner  │
+│  ──────────────────────────────────────────────────────  │
+│  Tes steps (dans l'ordre du workflow)                    │
+│  ──────────────────────────────────────────────────────  │
+│  Post <step N>               ← cleanup en ordre inverse  │
+│  Post <step N-1>                                         │
+│  ...                                                     │
+│  Complete job                ← GitHub ferme le runner    │
+└─────────────────────────────────────────────────────────┘
+```
+
+| Phase | Ce que fait GitHub | Ce que tu dois savoir |
+|---|---|---|
+| `Set up job` | Prépare la VM, charge les actions, configure les env vars | Si ça échoue, tes secrets ne sont pas chargés |
+| `Post <step>` | Nettoyage enregistré par l'action (ex: sauvegarde du cache) | C'est ici que `actions/cache` **écrit** le cache — si le job est annulé ici, le cache n'est pas sauvegardé |
+| `Complete job` | Détruit le runner, rapporte le statut final | — |
+
+#### Pourquoi les steps `Post` ?
+
+Certaines actions ont besoin de faire du nettoyage **après** que tous tes steps ont tourné :
+- `actions/checkout` → supprime le token d'authentification
+- `actions/cache` → compresse et envoie `node_modules/` vers les serveurs GitHub
+
+Elles déclarent cela dans leur `action.yml` via la clé `post:` :
+
+```yaml
+# Extrait interne de actions/cache
+runs:
+  using: 'node20'
+  main: 'dist/restore/index.js'
+  post: 'dist/save/index.js'      ← exécuté après tous tes steps
+  post-if: success()
+```
+
+**Modèle mental :** pense à une pile (stack). Les steps sont empilés à l'exécution, et les `Post` steps se dépilent en ordre inverse — exactement comme un bloc `try / finally` en code.
+
+---
+
+### 21. `branding` — uniquement pour le GitHub Marketplace
+
+Le champ `branding:` dans `action.yml` contrôle l'apparence de l'action sur le **GitHub Marketplace** uniquement :
+
+```yaml
+branding:
+  icon: 'terminal'   # nom d'icône Feather Icons
+  color: 'yellow'    # couleur de fond de l'icône
+```
+
+**Il n'apparaît pas dans les logs GitHub Actions.** Le runner ne l'interprète jamais — c'est une métadonnée purement visuelle pour la page Marketplace de l'action.
+
+| Où `branding` est visible | Où il est invisible |
+|---|---|
+| Page Marketplace de l'action (si publiée publiquement) | Logs de workflow (console runner) |
+| Liste des actions dans la recherche Marketplace | UI du job dans l'onglet Actions |
+
+Pour voir le branding, l'action doit être :
+1. Dans un repo **public**
+2. Publiée sur le Marketplace via les paramètres du repo GitHub
+
+---
+
