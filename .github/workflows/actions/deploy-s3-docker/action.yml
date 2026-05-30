@@ -15,6 +15,9 @@ inputs:
 outputs:
   website-url:
     description: 'The URL of the deployed website.'
+branding:
+  icon: 'terminal'
+  color: 'yellow'
 runs:
   using: 'docker'
   image: 'Dockerfile'
