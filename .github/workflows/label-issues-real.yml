@@ -2,6 +2,7 @@ name: Label Issues (Permissions Example)
 on:
   push:
     branches:
+      - main
       - section-10
   issues:
     types:
