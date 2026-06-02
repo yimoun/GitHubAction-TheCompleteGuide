@@ -530,3 +530,9 @@ Pour voir le branding, l'action doit être :
 
 ---
 
+### 22. Security concerns
+
+#### security injection 
+### Malicious Third-Party Action
+### Permission issues
+
