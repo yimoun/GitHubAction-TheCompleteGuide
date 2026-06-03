@@ -532,7 +532,48 @@ Pour voir le branding, l'action doit être :
 
 ### 22. Security concerns
 
-#### security injection 
+#### Script Injection
+
+Script injection happens when user-controlled data (e.g. an issue title) is interpolated directly into a `run:` shell script via `${{ }}` expressions.
+
+**Vulnerable example:**
+```yaml
+- name: Assign label
+  run: |
+    issue_title="${{ github.event.issue.title }}"  # DANGEROUS
+```
+
+An attacker creates an issue titled `a"; echo Got your secrets"` — the shell executes the injected command on the runner.
+
+**Solutions (per official GitHub docs):**
+
+1. **Intermediate environment variable** _(recommended)_
+```yaml
+- name: Assign label
+  env:
+    ISSUE_TITLE: ${{ github.event.issue.title }}
+  run: |
+    if [[ "$ISSUE_TITLE" == *"bug"* ]]; then
+      echo "Bug issue!"
+    fi
+```
+The value is set as an env var — the shell never interprets it as code.
+
+2. **Use the `github-script` action** to handle GitHub context values in JavaScript, keeping untrusted data out of shell entirely.
+
+3. **Restrict permissions** via `permissions:` to limit the blast radius if injection occurs.
+
+---
+
 ### Malicious Third-Party Action
+
+When using third-party actions, choose based on your security tolerance:
+
+| Approach | Security Level | Note |
+|---|---|---|
+| Only use your own Actions | Highest | Considerable effort to build & maintain |
+| Only use Actions by verified creators | Medium | Still not a 100% guarantee |
+| Use all public Actions | Lowest | Always analyze the action code first |
+
 ### Permission issues
 
