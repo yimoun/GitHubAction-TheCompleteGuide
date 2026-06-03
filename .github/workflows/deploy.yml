@@ -51,6 +51,9 @@ jobs:
           name: dist-files
           path: dist
   deploy:
+    permissions:
+      contents: read
+      id-token: write
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -63,14 +66,16 @@ jobs:
           path: ./dist
       - name: Output contents
         run: ls
+      - name: Get AWS permissons
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
       - name: Deploy site
         id: deploy
         uses: ./.github/workflows/actions/deploy-s3-docker
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         with:
-          bucket-name: ${{ secrets.S3_BUCKET_NAME }}
+          bucket-name: ${{ secrets.S3_BUCKET_NAME_OPENID }}
           dist-folder: ./dist
       - name: Output website URL
         run: echo "Website URL:${{ steps.deploy.outputs.website-url }}"
