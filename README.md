@@ -577,3 +577,39 @@ When using third-party actions, choose based on your security tolerance:
 
 ### Permission issues
 
+#### GitHub Token — Purpose & Validity
+
+GitHub automatically generates a special `GITHUB_TOKEN` secret for every workflow run. It authenticates API requests made during that run (e.g. commenting on issues, creating releases, labeling PRs).
+
+**Key points:**
+- Valid **only for the duration of the job** — invalidated automatically once the job completes
+- Unique per job run — cannot be reused across runs
+- Prevents unauthorized access after the workflow finishes
+
+```yaml
+- name: Use the GitHub token
+  run: echo "Token available as ${{ secrets.GITHUB_TOKEN }}"
+```
+
+---
+
+#### How Permissions Shape What the Token Can Do
+
+The permissions granted to `GITHUB_TOKEN` determine which GitHub API actions the workflow can perform. A token with `read` permission on `issues` cannot create or label issues — the API call will return a `403 Forbidden`.
+
+```yaml
+permissions:
+  issues: write      # can create, label, close issues
+  contents: read     # can read repo files, but not push
+```
+
+| Permission level | What the token can do |
+|---|---|
+| `read` | Read-only access (list, fetch) |
+| `write` | Read + write (create, update, delete) |
+| `none` | No access at all |
+
+**Default behavior:** GitHub's default grants broad `read`/`write` access. For security, adopt a least-privilege approach — declare only the permissions your workflow actually needs, reducing the blast radius if the token is ever misused (e.g. via script injection).
+
+---
+
