@@ -575,6 +575,37 @@ When using third-party actions, choose based on your security tolerance:
 | Only use Actions by verified creators | Medium | Still not a 100% guarantee |
 | Use all public Actions | Lowest | Always analyze the action code first |
 
+### 23. OpenID Connect (OIDC) with AWS
+
+Instead of storing long-lived AWS credentials (`ACCESS_KEY_ID` / `SECRET_ACCESS_KEY`) as GitHub secrets, OIDC lets workflows request **temporary, scoped credentials** directly from AWS at runtime.
+
+**Why not static AWS keys:**
+- Vulnerable to script injection (env vars can be exfiltrated)
+- Must be rotated and configured per repo/account — doesn't scale
+- Often over-permissioned
+
+**How OIDC works:**
+1. GitHub issues a short-lived JWT token for the workflow run
+2. AWS verifies the token via the GitHub OIDC provider
+3. AWS returns temporary credentials scoped to the exact IAM role needed
+4. Credentials expire when the job ends — nothing to leak or rotate
+
+```yaml
+permissions:
+  id-token: write   # required to request the OIDC token
+  contents: read
+
+- name: Configure AWS credentials
+  uses: aws-actions/configure-aws-credentials@v4
+  with:
+    role-to-assume: arn:aws:iam::123456789:role/github-actions-role
+    aws-region: us-east-1
+```
+
+Works the same way with **Azure** and **Google Cloud** — any provider that supports OIDC federation.
+
+---
+
 ### Permission issues
 
 #### GitHub Token — Purpose & Validity
